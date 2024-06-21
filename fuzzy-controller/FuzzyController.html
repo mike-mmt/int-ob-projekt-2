@@ -1,0 +1,157 @@
+<!Doctype HTML>
+<html>
+<head>
+	<META http-equiv="Content-Script-Type" content="text/javascript">
+	<script src="fuzzy.controller.js"></script>
+	<script src="lib/jquery.js"></script>
+	<script src="segway/fuzzyPendulum.js"></script>
+	
+
+
+	<script>
+	
+		//normalizes the angle and angular velocity to values between 0 and 1
+		function Normalize(value){
+			if(value<0.0) value = 0.0;
+			else if(value>90.0) value = 90.0
+			value -= 45;
+			return value/45.0;
+		}
+
+		function GetFuzzyRow(v){
+			var fuzzysets = v.getFuzzySets(),
+			n = fuzzysets.length,
+			i = 0,
+			html = "";
+			for(i=0;i<n;i++){
+				html += "<td>"+fuzzysets[i].getFuzzyValue().toFixed(2)+"</td>";
+			}
+			return html;
+		}
+		
+		function updateDisplay(){
+			var angle = $("#IX").val();
+			var velocity = $("#IDX").val();
+			
+			if(angle < -1) angle = -1;
+			else if(angle>1) angle = 1;
+			
+			if(velocity < -1) velocity = -1;
+			else if(velocity>1) velocity = 1;			
+			
+			varX.fuzzyfy(angle);
+			varDX.fuzzyfy(velocity);
+			varY.fireRules();
+			var v = varY.defuzzify();
+			var html = "Fuzzy set values:<table>"; 
+			html += "<tr><th> </th><th>NH</th><th>NL</th><th>Z</th><th>PL</th><th>PH</th><tr>";
+			html += "<tr><td>Fuzzy angle</td>"+ GetFuzzyRow(varX) + "<tr>";
+			html += "<tr><td>Fuzzy angular velocity</td>"+ GetFuzzyRow(varDX) + "<tr>";
+			html += "<tr><td>Fuzzy output velocity</td>"+ GetFuzzyRow(varY) + "<tr>";
+			html += "</table>";
+			html += "<br/><b>Input values:</b> angle= "+(1*angle).toFixed(2)+"   angular velocity= "+(1*velocity).toFixed(2);
+			html += "<br/><b>Output value:</b> horizontal speed="+v.toFixed(2);
+			$("#input").html(html);
+		}
+		
+		$(document).ready(function(){
+			
+			$("#pad").mousemove(function(event){
+				var offset = $(this).offset();
+				
+				
+				$("#IX").val(Normalize(event.pageX-offset.left).toFixed(2));
+				$("#IDX").val(Normalize(event.pageY-offset.top).toFixed(2));
+				updateDisplay();
+			});//.mouseout(function(){$("#input").html("");});
+			
+			$("#IX").change(function(){
+				updateDisplay();
+			});
+			
+			$("#IDX").change(function(){
+				updateDisplay();
+			});
+			
+			updateDisplay();
+		
+		});
+	
+	</script>
+	<style type="text/css">
+		#input{
+			margin:10px;
+		}
+		
+		#pad{
+			width:90px;
+			height:90px;
+			min-width:90px;
+			min-height:90px;
+			border:1px solid gray;
+			background-color:#efefef;
+		}
+		
+		table
+		{
+			border-collapse:collapse;
+		}
+		table,th, td
+		{
+			border: 1px solid black;
+		}
+		td{
+			padding: 1px 10px 1px 10px
+		}
+		th{
+			background-color:silver;
+		}
+		#pad{
+			margin-top:30px;
+		}
+		#padvalues{
+			margin-top:20px;
+		}
+		#padvalues  input{
+			border:none;
+			background:#efefef;
+		}
+		
+	</style>
+</head>
+<body>
+<div>
+	<h3>Testpage for fuzzy controller for inverted pendulum</h3>
+	<p>
+	This simple fuzzy controller controls a inverted pendulum object like a Segway or 
+	similar.  The input variables to the controller is the vertical angle and the angular velocity
+	and the control variable is the wheel speed.
+	
+	<p>
+	<p>Enter angle and angular velocity values: </p>
+</div>
+
+
+	<table id="padvalues">
+		<tr>
+			<td>Normalized vertical angle (-1,1):</td>
+			<td><input id="IX" type="text"/></td>
+		</tr>
+		<tr>
+			<td>Normalized angular velocity (-1,1):</td>
+			<td><input id="IDX" type="text"/></td>
+		</tr>		
+	</table>
+	
+	
+	<p>Or hover with the mouse over the gray pad.
+	The x coordinate is the angle and y coordinate is the angular velocity
+	</p>	
+	<div id="pad"></div>
+	
+	<div id="input"></div>
+	<div id="console"></div>
+	
+
+</body>
+</html>
